@@ -3,20 +3,44 @@ import httpx
 from app.core.config import settings
 
 
-def fetch_latest_news():
-    url = "https://api.currentsapi.services/v1/latest-news"
+def handle_api_error(exc: httpx.HTTPStatusError):
+    status_code = exc.response.status_code
 
+    if status_code == 401:
+        raise RuntimeError("Currents API authentication failed")
+
+    if status_code == 404:
+        raise RuntimeError("Currents API endpoint not found")
+
+    if status_code >= 500:
+        raise RuntimeError("Currents API server error")
+
+    raise RuntimeError("Currents API request failed")
+
+
+def make_currents_request(url: str, params: dict):
     try:
         response = httpx.get(
             url,
             headers={"Authorization": settings.currents_api_key},
-            params={"language": "en"},
+            params=params,
         )
 
         response.raise_for_status()
 
+        return response
+
     except httpx.RequestError as exc:
-        raise RuntimeError("Failed to fetch latest news") from exc
+        raise RuntimeError("Failed to fetch news") from exc
+
+
+def fetch_latest_news():
+    url = "https://api.currentsapi.services/v1/latest-news"
+
+    response = make_currents_request(
+        url,
+        {"language": "en"},
+    )
 
     data = response.json()
 
@@ -29,20 +53,13 @@ def fetch_latest_news():
 def fetch_news_by_topic(topic: str):
     url = "https://api.currentsapi.services/v1/latest-news"
 
-    try:
-        response = httpx.get(
-            url,
-            headers={"Authorization": settings.currents_api_key},
-            params={
-                "language": "en",
-                "category": topic,
-            }
-        )
-
-        response.raise_for_status()
-
-    except httpx.RequestError as exc:
-        raise RuntimeError("Failed to fetch news by topic") from exc
+    response = make_currents_request(
+        url,
+        {
+            "language": "en",
+            "category": topic,
+        },
+    )
 
     data = response.json()
 
