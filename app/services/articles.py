@@ -8,7 +8,7 @@ from app.models.topic import Topic
 from app.models.topic_article import TopicArticle
 
 
-def save_articles(db: Session, articles: list[dict], topic: Topic):
+def save_articles(db: Session, articles: list[dict], topic: Topic) -> int:
 
     saved_count = 0
 
