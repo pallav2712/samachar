@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
 from sqlalchemy.orm import Session
@@ -50,3 +50,39 @@ def save_articles(db: Session, articles: list[dict], topic: Topic) -> int:
     db.commit()
 
     return saved_count
+
+
+def get_todays_articles(db: Session) -> list[Article]:
+    today = datetime.now(ZoneInfo("Asia/Kolkata")).date()
+
+    start_of_day = datetime.combine(
+        today,
+        time.min,
+        tzinfo=ZoneInfo("Asia/Kolkata"),
+    )
+
+    end_of_day = datetime.combine(
+        today,
+        time.max,
+        tzinfo=ZoneInfo("Asia/Kolkata"),
+    )
+
+    return (
+        db.query(Article)
+        .filter(
+            Article.fetched_at >= start_of_day,
+            Article.fetched_at <= end_of_day,
+        )
+        .all()
+    )
+
+
+def get_articles_by_topic(db: Session, topic: Topic) -> list[Article]:
+    return (
+        db.query(Article)
+        .join(TopicArticle)
+        .filter(TopicArticle.topic_id == topic.id)
+        .order_by(Article.fetched_at.desc())
+        .limit(5)
+        .all()
+    )
