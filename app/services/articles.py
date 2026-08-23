@@ -78,6 +78,7 @@ def get_todays_articles(db: Session) -> list[Article]:
 
 
 def get_articles_by_topic(db: Session, topic: Topic) -> list[Article]:
+
     return (
         db.query(Article)
         .join(TopicArticle)
@@ -86,3 +87,17 @@ def get_articles_by_topic(db: Session, topic: Topic) -> list[Article]:
         .limit(5)
         .all()
     )
+
+
+def get_articles_by_topics(
+    db: Session,
+    topics: list[Topic],
+) -> list[Article]:
+
+    articles = []
+
+    for topic in topics:
+        topic_articles = get_articles_by_topic(db, topic)
+        articles.extend(topic_articles)
+
+    return articles
