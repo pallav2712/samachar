@@ -4,21 +4,22 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.article import Article
 from app.models.topic import Topic
-from app.services.articles import get_articles_by_topic
+from app.services.articles import get_articles_by_topics
 
 client = genai.Client(api_key=settings.gemini_api_key)
 
 
-def build_prompt(articles: list[Article]) -> str:
+def build_prompt(articles_by_topic: dict[str, list[Article]]) -> str:
     prompt = """
 You are a news summarizer for a daily morning news digest.
 
 Summarize the following news articles into concise bullet points.
 
 Rules:
+
 - Use one bullet point per important story.
 - Keep each bullet short and informative.
-- Do not create categories or sections.
+- Organize stories under their respective topics.
 - Do not use nested bullet points.
 - Use only information provided in the articles.
 - Do not invent or assume facts.
@@ -26,13 +27,17 @@ Rules:
 - Focus on the most important information from each story.
 
 Articles:
+
 """
 
-    for article in articles:
-        prompt += f"""
-Headline: {article.headline}
-Content: {article.content}
+    for topic, articles in articles_by_topic.items():
+        prompt += f"\n## {topic.title()}\n"
 
+        for article in articles:
+            prompt += f"""
+Headline: {article.headline}
+
+Content: {article.content}
 """
 
     return prompt
@@ -47,7 +52,7 @@ def generate_summary(prompt: str) -> str:
     return response.text
 
 
-def generate_topic_digest(db: Session, topic: Topic) -> str:
-    articles = get_articles_by_topic(db, topic)
-    prompt = build_prompt(articles)
+def generate_topics_digest(db: Session, topics: list[Topic]) -> str:
+    articles_by_topic = get_articles_by_topics(db, topics)
+    prompt = build_prompt(articles_by_topic)
     return generate_summary(prompt)

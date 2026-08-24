@@ -25,45 +25,37 @@ def make_currents_request(url: str, params: dict):
             headers={"Authorization": settings.currents_api_key},
             params=params,
         )
-
         response.raise_for_status()
-
         return response
+
+    except httpx.HTTPStatusError as exc:
+        handle_api_error(exc)
 
     except httpx.RequestError as exc:
         raise RuntimeError("Failed to fetch news") from exc
 
 
-def fetch_latest_news():
-    url = "https://api.currentsapi.services/v1/latest-news"
-
-    response = make_currents_request(
-        url,
-        {"language": "en"},
-    )
-
-    data = response.json()
-
-    if not data["news"]:
-        return []
-
-    return data["news"]
-
-
-def fetch_news_by_topic(topic: str):
+def fetch_news_by_topics(topics: list[str]) -> dict[str, list[dict]]:
     url = "https://api.currentsapi.services/v1/latest-news"
 
     response = make_currents_request(
         url,
         {
             "language": "en",
-            "category": topic,
+            "category": topics,
         },
     )
 
     data = response.json()
 
     if not data["news"]:
-        return []
+        return {topic: [] for topic in topics}
 
-    return data["news"]
+    articles_by_topic = {topic: [] for topic in topics}
+
+    for article in data["news"]:
+        for category in article.get("category", []):
+            if category in articles_by_topic:
+                articles_by_topic[category].append(article)
+
+    return articles_by_topic

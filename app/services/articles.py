@@ -8,44 +8,56 @@ from app.models.topic import Topic
 from app.models.topic_article import TopicArticle
 
 
-def save_articles(db: Session, articles: list[dict], topic: Topic) -> int:
-
+def save_articles(
+    db: Session,
+    articles_by_topic: dict[str, list[dict]],
+    topics: list[Topic],
+) -> int:
     saved_count = 0
 
-    for article in articles:
-        existing = db.query(Article).filter(Article.url == article["url"]).first()
+    topics_by_name = {topic.name: topic for topic in topics}
 
-        if existing:
-            article_obj = existing
-        else:
-            article_obj = Article(
-                headline=article["title"],
-                url=article["url"],
-                content=article["description"],
-                fetched_at=datetime.now(ZoneInfo("Asia/Kolkata")),
+    for topic_name, articles in articles_by_topic.items():
+        topic = topics_by_name[topic_name]
+
+        for article in articles:
+            existing = (
+                db.query(Article)
+                .filter(Article.url == article["url"])
+                .first()
             )
 
-            db.add(article_obj)
-            db.flush()
-
-            saved_count += 1
-
-        existing_relation = (
-            db.query(TopicArticle)
-            .filter(
-                TopicArticle.topic_id == topic.id,
-                TopicArticle.article_id == article_obj.id,
-            )
-            .first()
-        )
-
-        if not existing_relation:
-            db.add(
-                TopicArticle(
-                    topic_id=topic.id,
-                    article_id=article_obj.id,
+            if existing:
+                article_obj = existing
+            else:
+                article_obj = Article(
+                    headline=article["title"],
+                    url=article["url"],
+                    content=article["description"],
+                    fetched_at=datetime.now(ZoneInfo("Asia/Kolkata")),
                 )
+
+                db.add(article_obj)
+                db.flush()
+
+                saved_count += 1
+
+            existing_relation = (
+                db.query(TopicArticle)
+                .filter(
+                    TopicArticle.topic_id == topic.id,
+                    TopicArticle.article_id == article_obj.id,
+                )
+                .first()
             )
+
+            if not existing_relation:
+                db.add(
+                    TopicArticle(
+                        topic_id=topic.id,
+                        article_id=article_obj.id,
+                    )
+                )
 
     db.commit()
 
@@ -92,12 +104,10 @@ def get_articles_by_topic(db: Session, topic: Topic) -> list[Article]:
 def get_articles_by_topics(
     db: Session,
     topics: list[Topic],
-) -> list[Article]:
-
-    articles = []
+) -> dict[str, list[Article]]:
+    articles_by_topic = {}
 
     for topic in topics:
-        topic_articles = get_articles_by_topic(db, topic)
-        articles.extend(topic_articles)
+        articles_by_topic[topic.name] = get_articles_by_topic(db, topic)
 
-    return articles
+    return articles_by_topic
