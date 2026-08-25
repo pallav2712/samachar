@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.article import Article
 from app.models.topic import Topic
-from app.services.articles import get_articles_by_topics
+from app.services.articles import get_articles_by_topic
 
 client = genai.Client(api_key=settings.gemini_api_key)
 
@@ -52,7 +52,18 @@ def generate_summary(prompt: str) -> str:
     return response.text
 
 
-def generate_topics_digest(db: Session, topics: list[Topic]) -> str:
-    articles_by_topic = get_articles_by_topics(db, topics)
+def generate_topics_digest(
+    db: Session,
+    topics: list[Topic],
+) -> str:
+    articles_by_topic = {}
+
+    for topic in topics:
+        articles_by_topic[topic.name] = get_articles_by_topic(
+            db,
+            topic,
+        )
+
     prompt = build_prompt(articles_by_topic)
+
     return generate_summary(prompt)

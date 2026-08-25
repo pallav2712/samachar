@@ -10,54 +10,49 @@ from app.models.topic_article import TopicArticle
 
 def save_articles(
     db: Session,
-    articles_by_topic: dict[str, list[dict]],
-    topics: list[Topic],
+    articles: list[dict],
+    topic: Topic,
 ) -> int:
     saved_count = 0
 
-    topics_by_name = {topic.name: topic for topic in topics}
+    for article in articles:
+        existing = (
+            db.query(Article)
+            .filter(Article.url == article["url"])
+            .first()
+        )
 
-    for topic_name, articles in articles_by_topic.items():
-        topic = topics_by_name[topic_name]
-
-        for article in articles:
-            existing = (
-                db.query(Article)
-                .filter(Article.url == article["url"])
-                .first()
+        if existing:
+            article_obj = existing
+        else:
+            article_obj = Article(
+                headline=article["title"],
+                url=article["url"],
+                content=article["description"],
+                fetched_at=datetime.now(ZoneInfo("Asia/Kolkata")),
             )
 
-            if existing:
-                article_obj = existing
-            else:
-                article_obj = Article(
-                    headline=article["title"],
-                    url=article["url"],
-                    content=article["description"],
-                    fetched_at=datetime.now(ZoneInfo("Asia/Kolkata")),
-                )
+            db.add(article_obj)
+            db.flush()
 
-                db.add(article_obj)
-                db.flush()
+            saved_count += 1
 
-                saved_count += 1
-
-            existing_relation = (
-                db.query(TopicArticle)
-                .filter(
-                    TopicArticle.topic_id == topic.id,
-                    TopicArticle.article_id == article_obj.id,
-                )
-                .first()
+        existing_relation = (
+            db.query(TopicArticle)
+            .filter(
+                TopicArticle.topic_id == topic.id,
+                TopicArticle.article_id == article_obj.id,
             )
+            .first()
+        )
 
-            if not existing_relation:
-                db.add(
-                    TopicArticle(
-                        topic_id=topic.id,
-                        article_id=article_obj.id,
-                    )
+        if not existing_relation:
+            db.add(
+                TopicArticle(
+                    topic_id=topic.id,
+                    article_id=article_obj.id,
                 )
+            )
 
     db.commit()
 
@@ -89,8 +84,10 @@ def get_todays_articles(db: Session) -> list[Article]:
     )
 
 
-def get_articles_by_topic(db: Session, topic: Topic) -> list[Article]:
-
+def get_articles_by_topic(
+    db: Session,
+    topic: Topic,
+) -> list[Article]:
     return (
         db.query(Article)
         .join(TopicArticle)
@@ -99,15 +96,3 @@ def get_articles_by_topic(db: Session, topic: Topic) -> list[Article]:
         .limit(5)
         .all()
     )
-
-
-def get_articles_by_topics(
-    db: Session,
-    topics: list[Topic],
-) -> dict[str, list[Article]]:
-    articles_by_topic = {}
-
-    for topic in topics:
-        articles_by_topic[topic.name] = get_articles_by_topic(db, topic)
-
-    return articles_by_topic

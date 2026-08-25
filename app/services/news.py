@@ -35,27 +35,20 @@ def make_currents_request(url: str, params: dict):
         raise RuntimeError("Failed to fetch news") from exc
 
 
-def fetch_news_by_topics(topics: list[str]) -> dict[str, list[dict]]:
+def fetch_news_by_topic(topic: str):
     url = "https://api.currentsapi.services/v1/latest-news"
 
     response = make_currents_request(
         url,
         {
             "language": "en",
-            "category": topics,
+            "category": topic,
         },
     )
 
     data = response.json()
 
     if not data["news"]:
-        return {topic: [] for topic in topics}
+        return []
 
-    articles_by_topic = {topic: [] for topic in topics}
-
-    for article in data["news"]:
-        for category in article.get("category", []):
-            if category in articles_by_topic:
-                articles_by_topic[category].append(article)
-
-    return articles_by_topic
+    return data["news"]
