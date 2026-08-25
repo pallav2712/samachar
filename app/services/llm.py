@@ -1,3 +1,4 @@
+import httpx
 from google import genai
 from sqlalchemy.orm import Session
 
@@ -6,7 +7,7 @@ from app.models.article import Article
 from app.models.topic import Topic
 from app.services.articles import get_articles_by_topic
 
-client = genai.Client(api_key=settings.gemini_api_key)
+gemini_client = genai.Client(api_key=settings.gemini_api_key)
 
 
 def build_prompt(articles_by_topic: dict[str, list[Article]]) -> str:
@@ -43,13 +44,89 @@ Content: {article.content}
     return prompt
 
 
-def generate_summary(prompt: str) -> str:
-    response = client.models.generate_content(
+def generate_summary_with_gemini(prompt: str) -> str:
+    response = gemini_client.models.generate_content(
         model="gemini-3-flash-preview",
         contents=prompt,
     )
 
     return response.text
+
+
+def generate_summary_with_groq(prompt: str) -> str:
+    from groq import Groq
+
+    client = Groq(api_key=settings.groq_api_key)
+
+    response = client.chat.completions.create(
+        model="openai/gpt-oss-20b",
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+    )
+
+    return response.choices[0].message.content
+
+
+def generate_summary_with_openrouter(prompt: str) -> str:
+    response = httpx.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {settings.openrouter_api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": "openrouter/free",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+        },
+    )
+
+    response.raise_for_status()
+
+    data = response.json()
+
+    return data["choices"][0]["message"]["content"]
+
+
+def generate_summary(prompt: str) -> str:
+    try:
+        return generate_summary_with_gemini(prompt)
+
+    except Exception:
+        try:
+            return generate_summary_with_groq(prompt)
+
+        except Exception:
+            try:
+                return generate_summary_with_openrouter(prompt)
+
+            except Exception as exc:
+                raise RuntimeError("All LLM providers failed") from exc
+            
+# def generate_summary(prompt: str) -> str:
+#     try:
+#         raise RuntimeError("Testing Gemini fallback")
+
+#     except Exception:
+#         try:
+#             raise RuntimeError("Testing Groq fallback")
+
+#         except Exception:
+#             try:
+#                 return generate_summary_with_openrouter(prompt)
+
+#             except Exception as exc:
+#                 raise RuntimeError(
+#                     "All LLM providers failed"
+#                 ) from exc
 
 
 def generate_topics_digest(
