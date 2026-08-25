@@ -1,9 +1,13 @@
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 import httpx
 from google import genai
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.article import Article
+from app.models.digest import Digest
 from app.models.topic import Topic
 from app.services.articles import get_articles_by_topic
 
@@ -98,19 +102,20 @@ def generate_summary_with_openrouter(prompt: str) -> str:
 
 def generate_summary(prompt: str) -> str:
     try:
-        return generate_summary_with_gemini(prompt)
+        return generate_summary_with_groq(prompt)
 
     except Exception:
         try:
-            return generate_summary_with_groq(prompt)
+            return generate_summary_with_openrouter(prompt)
 
         except Exception:
             try:
-                return generate_summary_with_openrouter(prompt)
+                return generate_summary_with_gemini(prompt)
 
             except Exception as exc:
                 raise RuntimeError("All LLM providers failed") from exc
-            
+
+
 # def generate_summary(prompt: str) -> str:
 #     try:
 #         raise RuntimeError("Testing Gemini fallback")
@@ -143,4 +148,14 @@ def generate_topics_digest(
 
     prompt = build_prompt(articles_by_topic)
 
-    return generate_summary(prompt)
+    digest = generate_summary(prompt)
+
+    digest_obj = Digest(
+        content=digest,
+        generated_at=datetime.now(ZoneInfo("Asia/Kolkata")),
+    )
+
+    db.add(digest_obj)
+    db.commit()
+
+    return digest
