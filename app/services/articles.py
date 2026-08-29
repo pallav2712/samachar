@@ -88,10 +88,29 @@ def get_articles_by_topic(
     db: Session,
     topic: Topic,
 ) -> list[Article]:
+    today = datetime.now(ZoneInfo("Asia/Kolkata")).date()
+
+    start_of_day = datetime.combine(
+        today,
+        time.min,
+        tzinfo=ZoneInfo("Asia/Kolkata"),
+    )
+
+    end_of_day = datetime.combine(
+        today,
+        time.max,
+        tzinfo=ZoneInfo("Asia/Kolkata"),
+    )
+
     return (
         db.query(Article)
         .join(TopicArticle)
-        .filter(TopicArticle.topic_id == topic.id)
+        .filter(
+            TopicArticle.topic_id == topic.id,
+            Article.fetched_at >= start_of_day,
+            Article.fetched_at <= end_of_day,
+            Article.is_read.is_(False),
+        )
         .order_by(Article.fetched_at.desc())
         .limit(5)
         .all()

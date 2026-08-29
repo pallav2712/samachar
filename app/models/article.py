@@ -16,3 +16,4 @@ class Article(Base):
     fetched_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
+    is_read: Mapped[bool] = mapped_column(default=False, nullable=False)
