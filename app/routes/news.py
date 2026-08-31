@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.services.llm import generate_topics_digest
 from app.services.pipeline import fetch_and_save_news
-from app.services.topics import get_topics
+from app.services.topics import get_or_create_default_topics
 
 router = APIRouter(prefix="/news", tags=["News"])
 
@@ -24,7 +24,7 @@ def fetch_news(
 def generate_digest(
     db: Annotated[Session, Depends(get_db)],
 ) -> dict[str, str]:
-    topics = get_topics(db)
+    topics = get_or_create_default_topics(db)
 
     digest = generate_topics_digest(
         db,
