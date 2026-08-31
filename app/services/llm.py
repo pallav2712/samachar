@@ -149,7 +149,11 @@ def generate_topics_digest(
     prompt = build_prompt(articles_by_topic)
 
     digest = generate_summary(prompt)
-    
+
+    for articles in articles_by_topic.values():
+        for article in articles:
+            article.is_read = True
+
     digest_obj = Digest(
         content=digest,
         generated_at=datetime.now(ZoneInfo("Asia/Kolkata")),
