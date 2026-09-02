@@ -11,3 +11,12 @@ async def start_command(
     )
 
 
+async def help_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    await update.message.reply_text(
+        "Available commands:\n"
+        "/start - Start Samachar\n"
+        "/help - Show available commands"
+    )
