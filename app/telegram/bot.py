@@ -1,6 +1,7 @@
-from telegram.ext import Application
+from telegram.ext import Application, CommandHandler
 
 from app.core.config import settings
+from app.telegram.handlers import start_command
 
 
 def create_bot():
@@ -8,4 +9,13 @@ def create_bot():
         settings.telegram_bot_token
     ).build()
 
+    application.add_handler(
+        CommandHandler("start", start_command)
+    )
+
     return application
+
+
+if __name__ == "__main__":
+    application = create_bot()
+    application.run_polling()
