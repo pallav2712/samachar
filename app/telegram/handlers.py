@@ -20,3 +20,12 @@ async def help_command(
         "/start - Start Samachar\n"
         "/help - Show available commands"
     )
+
+
+async def subscribe_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    await update.message.reply_text(
+        "You are subscribed to Samachar!"
+    ) 

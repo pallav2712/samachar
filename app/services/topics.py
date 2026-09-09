@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.models.topic import Topic
 
-DEFAULT_TOPICS = [
+VALID_TOPICS = [
     "regional",
     "technology",
     "lifestyle",
@@ -29,15 +29,27 @@ def get_topics(db: Session):
     return result.scalars().all()
 
 
-def get_or_create_default_topics(db: Session):
-    topics = get_topics(db)
+def subscribe_to_topic(
+    db: Session,
+    topic_name: str,
+) -> str:
+    topic_name = topic_name.lower()
 
-    if topics:
-        return topics
+    if topic_name not in VALID_TOPICS:
+        return "Invalid topic."
 
-    topics = [Topic(name=name) for name in DEFAULT_TOPICS]
+    existing_topic = (
+        db.query(Topic)
+        .filter(Topic.name == topic_name)
+        .first()
+    )
 
-    db.add_all(topics)
+    if existing_topic:
+        return "You are already subscribed to this topic."
+
+    topic = Topic(name=topic_name)
+
+    db.add(topic)
     db.commit()
 
-    return topics
+    return "You are subscribed to this topic."
