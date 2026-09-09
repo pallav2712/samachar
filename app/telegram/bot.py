@@ -5,6 +5,7 @@ from app.telegram.handlers import (
     help_command,
     start_command,
     subscribe_command,
+    unsubscribe_command,
 )
 
 
@@ -16,6 +17,8 @@ def create_bot():
     application.add_handler(CommandHandler("help", help_command))
 
     application.add_handler(CommandHandler("subscribe", subscribe_command))
+
+    application.add_handler(CommandHandler("unsubscribe", unsubscribe_command))
 
     return application
 
