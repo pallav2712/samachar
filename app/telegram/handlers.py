@@ -2,7 +2,9 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from app.database import SessionLocal
+from app.services.llm import generate_topics_digest
 from app.services.topics import (
+    get_topics,
     subscribe_to_topic,
     unsubscribe_from_topic,
 )
@@ -66,3 +68,26 @@ async def unsubscribe_command(
         db.close()
 
     await update.message.reply_text(result)
+
+
+async def digest_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    db = SessionLocal()
+
+    try:
+        topics = get_topics(db)
+
+        if not topics:
+            await update.message.reply_text(
+                "Please subscribe to at least one topic first."
+            )
+            return
+
+        digest = generate_topics_digest(db, topics)
+
+    finally:
+        db.close()
+
+    await update.message.reply_text(digest)
