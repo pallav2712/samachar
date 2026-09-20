@@ -38,11 +38,7 @@ def subscribe_to_topic(
     if topic_name not in VALID_TOPICS:
         return "Invalid topic."
 
-    existing_topic = (
-        db.query(Topic)
-        .filter(Topic.name == topic_name)
-        .first()
-    )
+    existing_topic = db.query(Topic).filter(Topic.name == topic_name).first()
 
     if existing_topic:
         return f"You are already subscribed to {topic_name}."
@@ -56,26 +52,25 @@ def subscribe_to_topic(
 
 
 def unsubscribe_from_topic(
-        db: Session,
-        topic_name: str,
+    db: Session,
+    topic_name: str,
 ) -> str:
-    
+
     topic_name = topic_name.lower()
-    
+
     if topic_name not in VALID_TOPICS:
         return "Invalid topic."
 
-    existing_topic = (
-            db.query(Topic)
-            .filter(Topic.name == topic_name)
-            .first()
-        )
+    existing_topic = db.query(Topic).filter(Topic.name == topic_name).first()
 
     if not existing_topic:
-            return f"You are not subscribed to {topic_name}."
+        return f"You are not subscribed to {topic_name}."
 
-    
-    
+    topic_count = db.query(Topic).count()
+
+    if topic_count == 1:
+        return "You must have at least one subscribed topic."
+
     db.delete(existing_topic)
     db.commit()
 
