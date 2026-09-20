@@ -2,6 +2,7 @@ from telegram.ext import Application, CommandHandler
 
 from app.core.config import settings
 from app.telegram.handlers import (
+    digest_command,
     help_command,
     start_command,
     subscribe_command,
@@ -19,6 +20,8 @@ def create_bot():
     application.add_handler(CommandHandler("subscribe", subscribe_command))
 
     application.add_handler(CommandHandler("unsubscribe", unsubscribe_command))
+
+    application.add_handler(CommandHandler("digest", digest_command))
 
     return application
 
