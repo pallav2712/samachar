@@ -2,10 +2,9 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from app.database import SessionLocal
-from app.services.llm import generate_topics_digest
+from app.services.digest import generate_digest
 from app.services.pipeline import fetch_and_save_news
 from app.services.topics import (
-    get_topics,
     subscribe_to_topic,
     unsubscribe_from_topic,
 )
@@ -75,23 +74,17 @@ async def digest_command(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ):
-
     db = SessionLocal()
 
     try:
-        topics = get_topics(db)
-
-        if not topics:
-            await update.message.reply_text(
-                "Please subscribe to at least one topic first."
-            )
-            return
-
-        fetch_and_save_news(db)
-
-        digest = generate_topics_digest(db, topics)
-
+        digest = generate_digest(db)
     finally:
         db.close()
+
+    if digest is None:
+        await update.message.reply_text(
+            "Please subscribe to at least one topic first."
+        )
+        return
 
     await update.message.reply_text(digest)
