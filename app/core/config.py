@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     groq_api_key: str
     openrouter_api_key: str
     telegram_bot_token: str
+    telegram_chat_id: int
     database_url: str
 
     model_config = SettingsConfigDict(

@@ -3,7 +3,6 @@ from telegram.ext import ContextTypes
 
 from app.database import SessionLocal
 from app.services.digest import generate_digest
-from app.services.pipeline import fetch_and_save_news
 from app.services.topics import (
     subscribe_to_topic,
     unsubscribe_from_topic,
@@ -14,6 +13,7 @@ async def start_command(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ):
+
     await update.message.reply_text("Welcome to Samachar!")
 
 
@@ -82,9 +82,7 @@ async def digest_command(
         db.close()
 
     if digest is None:
-        await update.message.reply_text(
-            "Please subscribe to at least one topic first."
-        )
+        await update.message.reply_text("Please subscribe to at least one topic first.")
         return
 
     await update.message.reply_text(digest)
