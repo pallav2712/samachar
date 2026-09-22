@@ -1,6 +1,9 @@
+import asyncio
+
 from telegram.ext import Application, CommandHandler
 
 from app.core.config import settings
+from app.scheduler import start_scheduler
 from app.telegram.handlers import (
     digest_command,
     help_command,
@@ -28,4 +31,9 @@ def create_bot():
 
 if __name__ == "__main__":
     application = create_bot()
+
+    loop = asyncio.get_event_loop()
+    application.bot_data["loop"] = loop
+
+    start_scheduler(application)
     application.run_polling()
