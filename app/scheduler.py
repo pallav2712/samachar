@@ -1,4 +1,5 @@
 import asyncio
+from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -6,14 +7,17 @@ from app.core.config import settings
 from app.database import SessionLocal
 from app.services.digest import generate_digest
 
-scheduler = BackgroundScheduler()
+scheduler = BackgroundScheduler(
+    timezone=ZoneInfo("Asia/Kolkata")
+)
 
 
 def start_scheduler(application):
     scheduler.add_job(
         scheduled_digest,
-        "interval",
-        minutes=1,
+        "cron",
+        hour=8,
+        minute=0,
         args=[application],
 )
     
