@@ -1,4 +1,4 @@
-import asyncio
+
 
 from telegram.ext import Application, CommandHandler
 
@@ -32,8 +32,8 @@ def create_bot():
 if __name__ == "__main__":
     application = create_bot()
 
-    loop = asyncio.get_event_loop()
-    application.bot_data["loop"] = loop
-
+    
     start_scheduler(application)
-    application.run_polling()
+    
+    
+    application.run_polling() #for continously message checking form telegram gui
