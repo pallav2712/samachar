@@ -13,7 +13,7 @@ def start_scheduler(application):
     scheduler.add_job(
         scheduled_digest,
         "interval",
-        minutes=1,
+        seconds = 30,
         args=[application],
     )
 

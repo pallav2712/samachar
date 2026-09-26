@@ -11,8 +11,17 @@ from app.telegram.handlers import (
 )
 
 
+async def post_init(application):
+    start_scheduler(application)
+
+
 def create_bot():
-    application = Application.builder().token(settings.telegram_bot_token).build()
+    application = (
+        Application.builder()
+        .token(settings.telegram_bot_token)
+        .post_init(post_init)
+        .build()
+    )
 
     application.add_handler(CommandHandler("start", start_command))
 
@@ -27,11 +36,9 @@ def create_bot():
     return application
 
 
-
 if __name__ == "__main__":
-  
     application = create_bot()
 
-    application.run_polling() #for continously message checking form telegram gui
+    application.run_polling()  # for continously message checking form telegram gui
 
-    start_scheduler(application)
+   
