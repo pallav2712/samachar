@@ -1,5 +1,3 @@
-
-
 from telegram.ext import Application, CommandHandler
 
 from app.core.config import settings
@@ -29,11 +27,11 @@ def create_bot():
     return application
 
 
+
 if __name__ == "__main__":
+  
     application = create_bot()
 
-    
-    start_scheduler(application)
-    
-    
     application.run_polling() #for continously message checking form telegram gui
+
+    start_scheduler(application)

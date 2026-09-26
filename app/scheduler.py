@@ -1,13 +1,12 @@
-import asyncio
 from zoneinfo import ZoneInfo
 
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.core.config import settings
 from app.database import SessionLocal
 from app.services.digest import generate_digest
 
-scheduler = BackgroundScheduler(timezone=ZoneInfo("Asia/Kolkata"))
+scheduler = AsyncIOScheduler(timezone=ZoneInfo("Asia/Kolkata"))
 
 
 def start_scheduler(application):
@@ -21,7 +20,7 @@ def start_scheduler(application):
     scheduler.start()
 
 
-def scheduled_digest(application):
+async def scheduled_digest(application):
     db = SessionLocal()
 
     try:
@@ -33,9 +32,7 @@ def scheduled_digest(application):
     finally:
         db.close()
 
-    asyncio.run(
-        application.bot.send_message(
-            chat_id=settings.telegram_chat_id,
-            text=digest,
-        )
+    await application.bot.send_message(
+        chat_id=settings.telegram_chat_id,
+        text=digest,
     )
